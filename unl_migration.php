@@ -901,6 +901,11 @@ class Unl_Migration_Tool
           $titleParts = explode('|', $titleText);
           if (count($titleParts) > 2) {
             $pageTitle = trim(array_pop($titleParts));
+            
+            if (strpos($pageTitle, 'University of Nebraska') === 0) {
+              //This is the new format where the page title is the first part of the <title>
+              $pageTitle = trim(array_shift($titleParts));
+            }
           }
           // Finally, combine what title does exist with the last part of the path
           else {
