@@ -1250,6 +1250,9 @@ class Unl_Migration_Tool
 
         $data = curl_exec($this->_curl);
         $meta = curl_getinfo($this->_curl);
+      
+        //Rate limiting
+        sleep(1);
 
         $rawHeaders = substr($data, 0, $meta['header_size']);
         $rawHeaders = trim($rawHeaders);
@@ -1272,6 +1275,10 @@ class Unl_Migration_Tool
             curl_setopt($this->_curl, CURLOPT_NOBODY, FALSE);
             $data = curl_exec($this->_curl);
             $meta = curl_getinfo($this->_curl);
+
+            //Rate limiting
+            sleep(1);
+          
             $content = substr($data, $meta['header_size']);
         }
 
