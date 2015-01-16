@@ -1486,8 +1486,8 @@ class Unl_Migration_Tool
 
     return $this->_get_text_between_tokens(
       $html,
-      "<!-- End of shared left start of right -->\n<div class=\"three_col right\">",
-      '<form action="" method="post" name="hrefFm">'
+      'id="main-content" role="main">',
+      "</div>\n\n\n\n\n\n\t\n\n\n\n\n\n<form action"
     );
   }
 
