@@ -1186,14 +1186,19 @@ class Unl_Migration_Tool
           $node->path['pathauto'] = FALSE;
         }
 
-        $filter_format_keys = array_keys(filter_formats());
+        $body_format        = 'full_html';
+        $filter_format_keys = array_keys(filter_formats($GLOBALS['user']));
+        if (!in_array($body_format, $filter_format_keys)) {
+            $body_format = array_shift($filter_format_keys);
+        }
+        
         $node->body = array(
-          'und' => array(
-            array(
-              'value' => $content,
-              'format' => array_shift($filter_format_keys),
+            'und' => array(
+                array(
+                    'value' => $content,
+                    'format' => $body_format,
+                ),
             ),
-          ),
         );
 
         node_submit($node);
