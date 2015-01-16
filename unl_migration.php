@@ -920,7 +920,12 @@ class Unl_Migration_Tool
             $pageTitle = 'Untitled';
         }
 
-        $maincontentNode = $dom->getElementById('maincontent');
+        if ($this->_useLiferayCode) {
+          $maincontentNode = $dom->getElementById('main-content');
+        } else {
+          $maincontentNode = $dom->getElementById('maincontent');
+        }
+      
         if (!$maincontentNode) {
             $this->_log('The file at ' . $fullPath . ' has no valid maincontentarea. Using entire body.', WATCHDOG_WARNING);
             $bodyNodes = $dom->getElementsByTagName('body');
