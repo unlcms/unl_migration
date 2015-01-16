@@ -889,6 +889,11 @@ class Unl_Migration_Tool
             $pageTitle .= rtrim(' ' . basename($path));
           }
         }
+      
+        //Try getting the pageTitle from the breadcrumbs
+        if (!$pageTitle) {
+          $pageTitle = $this->getPageTitleFromBreadcrumbs($html);
+        }
 
         // If there is no WDN compliant title, search for others
         if (!$pageTitle) {
@@ -976,6 +981,27 @@ class Unl_Migration_Tool
         if ($cleanPath != $path) {
           $this->_hrefTransformFiles[$path] = $cleanPath;
         }
+    }
+
+    private function getPageTitleFromBreadcrumbs($html)
+    {
+      $html = $this->_tidy_html_fragment($html);
+  
+      $dom = new DOMDocument();
+      if (!@$dom->loadHTML($html)) {
+        return false;
+      }
+  
+      $xpath = new DOMXpath($dom);
+  
+      $nodes = $xpath->query("(//nav[@id='breadcrumbs']/ul/li)[last()]");
+  
+      if ($nodes->length == 0) {
+        //No match was found.
+        return false;
+      }
+  
+      return trim($nodes->item(0)->nodeValue);
     }
 
     private function _processLinks($originalHref, $path, $page_base = NULL, $tag = NULL) {
@@ -1533,6 +1559,8 @@ class Unl_Migration_Tool
       'output-xhtml' => TRUE,
       'show-body-only' => TRUE,
       'wrap' => 0,
+      'new-blocklevel-tags' => 'article,header,footer,section,nav,main,aside,figure,figcaption',
+      'new-inline-tags'     => 'video,audio,canvas,ruby,rt,rp,track,mark,meter,time',
     );
     $tidy = new Tidy();
     $tidy->parseString($html, $config, 'utf8');
