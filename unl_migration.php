@@ -1279,12 +1279,12 @@ class Unl_Migration_Tool
         $url = strtr($url, array(' ' => '%20'));
         curl_setopt($this->_curl, CURLOPT_URL, $url);
         curl_setopt($this->_curl, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($this->_curl, CURLOPT_HEADER, TRUE);
         
         if ($this->_useLiferayCode == false) {
           //Liferay doesn't like useragents
           curl_setopt($this->_curl, CURLOPT_USERAGENT, 'UNL-CMS Migration Tool');
           //Liferay doesn't respond well to HEAD requests, so don't do HEAD requests...
-          curl_setopt($this->_curl, CURLOPT_HEADER, TRUE);
           curl_setopt($this->_curl, CURLOPT_NOBODY, TRUE);
         }
 
