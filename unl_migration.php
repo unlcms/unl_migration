@@ -1275,9 +1275,14 @@ class Unl_Migration_Tool
         $url = strtr($url, array(' ' => '%20'));
         curl_setopt($this->_curl, CURLOPT_URL, $url);
         curl_setopt($this->_curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($this->_curl, CURLOPT_HEADER, TRUE);
-        curl_setopt($this->_curl, CURLOPT_NOBODY, TRUE);
-        curl_setopt($this->_curl, CURLOPT_USERAGENT, 'UNL-CMS Migration Tool');
+        
+        if ($this->_useLiferayCode == false) {
+          //Liferay doesn't like useragents
+          curl_setopt($this->_curl, CURLOPT_USERAGENT, 'UNL-CMS Migration Tool');
+          //Liferay doesn't respond well to HEAD requests, so don't do HEAD requests...
+          curl_setopt($this->_curl, CURLOPT_HEADER, TRUE);
+          curl_setopt($this->_curl, CURLOPT_NOBODY, TRUE);
+        }
 
         $data = curl_exec($this->_curl);
         $meta = curl_getinfo($this->_curl);
@@ -1303,12 +1308,15 @@ class Unl_Migration_Tool
             $this->_log("The file at $url is $size MB!  Ignoring.", WATCHDOG_ERROR);
             $content = '';
         } else {
-            curl_setopt($this->_curl, CURLOPT_NOBODY, FALSE);
-            $data = curl_exec($this->_curl);
-            $meta = curl_getinfo($this->_curl);
+            //If we already did a GET request, there is no need to do another one.
+            if ($this->_useLiferayCode == false) {
+              curl_setopt($this->_curl, CURLOPT_NOBODY, FALSE);
+              $data = curl_exec($this->_curl);
+              $meta = curl_getinfo($this->_curl);
 
-            //Rate limiting
-            sleep(1);
+              //Rate limiting
+              sleep(1);
+            }
           
             $content = substr($data, $meta['header_size']);
         }
@@ -1527,11 +1535,23 @@ class Unl_Migration_Tool
       return FALSE;
     }
 
-    return $this->_get_text_between_tokens(
-      $html,
-      'id="main-content" role="main">',
-      "</div>\n\n\n\n\n\n\t\n\n\n\n\n\n<form action"
-    );
+    $html = $this->_tidy_html_fragment($html);
+
+    $dom = new DOMDocument();
+    if (!@$dom->loadHTML($html)) {
+      return false;
+    }
+
+    $xpath = new DOMXpath($dom);
+
+    $nodes = $xpath->query("//div[@id='main-content']");
+
+    if ($nodes->length == 0) {
+      //No match was found.
+      return false;
+    }
+
+    return $dom->saveHTML($nodes->item(0));
   }
 
   private function _get_text_between_tokens($text, $start_token, $end_token, $tidy_output = TRUE) {
