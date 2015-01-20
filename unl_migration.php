@@ -817,11 +817,7 @@ class Unl_Migration_Tool
         }
         $html = $data['content'];
 
-        $maincontentarea = '';
-
-        if ($path != '') {
-          $maincontentarea = $this->_get_liferay_content_area($html);
-        }
+        $maincontentarea = $this->_get_liferay_content_area($html);
 
         if (!$maincontentarea) {
           $maincontentarea = $this->_get_instance_editable_content($html, 'maincontentarea');
