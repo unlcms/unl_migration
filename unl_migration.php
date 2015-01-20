@@ -854,6 +854,10 @@ class Unl_Migration_Tool
             $this->_log('The file at ' . $fullPath . ' has no valid body. Ignoring.', WATCHDOG_ERROR);
             return;
         }
+      
+        if ($this->_useLiferayCode) {
+          $maincontentarea = $this->_perform_liferay_maincontent_replacements($maincontentarea);
+        }
 
         $dom = new DOMDocument();
         @$dom->loadHTML($html);
@@ -1550,6 +1554,95 @@ class Unl_Migration_Tool
       //No match was found.
       return false;
     }
+
+    return $dom->saveHTML($nodes->item(0));
+  }
+  
+  private function xpath_get_has_class($class)
+  {
+    return "contains(concat(' ', normalize-space(@class), ' '), ' " . $class . " ')";
+  }
+
+  private function _perform_liferay_maincontent_replacements($maincontent) {
+    if (!$this->_useLiferayCode) {
+      return FALSE;
+    }
+
+    $html = $this->_tidy_html_fragment($maincontent);
+
+    $dom = new DOMDocument();
+    if (!@$dom->loadHTML($html)) {
+      return false;
+    }
+
+    $xpath = new DOMXpath($dom);
+
+    //Y.all("#main-content").addClass('wdn-main');
+    $result = $xpath->query("//div[@id='main-content']");
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' wdn-main');
+    }
+
+    //Y.all('#main-content > div').wrap('<div class="wdn-band"></div>');
+    $result = $xpath->query("//div[@id='main-content']/div");
+    foreach ($result as $node) {
+      $wrapper = $dom->createElement('div');
+      $wrapper->setAttribute('class', 'wdn-band');
+      $node->parentNode->replaceChild($wrapper, $node);
+      $wrapper->appendChild($node);
+    }
+
+    //Y.all("div[id$='main-content']:not(.nocolumns):not(.columns-max)  .portlet-layout").addClass('wdn-grid-set').wrap('<div class="wdn-inner-wrapper wdn-inner-padding-none"></div>');
+    $result = $xpath->query(
+      "//*[not(" . $this->xpath_get_has_class('nocolumns') . ")"
+      ." and not(" . $this->xpath_get_has_class('columns-max') . ")"
+      ." and " . $this->xpath_get_has_class('portlet-layout') . "]"
+    );
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' wdn-grid-set');
+      $wrapper = $dom->createElement('div');
+      $wrapper->setAttribute('class', 'wdn-inner-wrapper wdn-inner-padding-none');
+      $node->parentNode->replaceChild($wrapper, $node);
+      $wrapper->appendChild($node);
+    }
+
+    //Y.all("#main-content:not(.nocolumns) .portlet-column-only").addClass('wdn-col-full');
+    $result = $xpath->query("//*[not(" . $this->xpath_get_has_class('nocolumns') . ") and " . $this->xpath_get_has_class('portlet-column-only"') . "]");
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' wdn-col-full');
+    }
+
+    //Y.all(".aui-w25.portlet-column").addClass('bp1-wdn-col-one-fourth');
+    $result = $xpath->query("//*[" . $this->xpath_get_has_class('aui-w25') . " and " . $this->xpath_get_has_class('portlet-column') . "]");
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' bp1-wdn-col-one-fourth');
+    }
+
+    //Y.all(".aui-w30.portlet-column").addClass('bp1-wdn-col-one-third');
+    $result = $xpath->query("//*[" . $this->xpath_get_has_class('aui-w30') . " and " . $this->xpath_get_has_class('portlet-column') . "]");
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' bp1-wdn-col-one-third');
+    }
+
+    //Y.all(".aui-w33.portlet-column").addClass('bp1-wdn-col-one-third').removeClass('aui-w33');
+    $result = $xpath->query("//*[" . $this->xpath_get_has_class('aui-w33') . " and " . $this->xpath_get_has_class('portlet-column') . "]");
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' bp1-wdn-col-one-third');
+    }
+
+    //Y.all(".aui-w50.portlet-column").addClass('bp1-wdn-col-one-half');
+    $result = $xpath->query("//*[" . $this->xpath_get_has_class('aui-w50') . " and " . $this->xpath_get_has_class('portlet-column') . "]");
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' bp1-wdn-col-one-half');
+    }
+
+    //Y.all(".aui-w70.portlet-column").addClass('bp1-wdn-col-two-thirds');
+    $result = $xpath->query("//*[" . $this->xpath_get_has_class('aui-w70') . " and " . $this->xpath_get_has_class('portlet-column') . "]");
+    foreach ($result as $node) {
+      $node->setAttribute('class', $node->getAttribute('class') . ' bp1-wdn-col-two-thirds');
+    }
+
+    $nodes = $xpath->query("//div[@id='main-content']");
 
     return $dom->saveHTML($nodes->item(0));
   }
