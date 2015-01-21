@@ -936,7 +936,7 @@ class Unl_Migration_Tool
         }
       
         if (!$maincontentNode) {
-            $this->_log('The file at ' . $fullPath . ' has no valid maincontentarea. Using entire body.', WATCHDOG_WARNING);
+            $this->_log('The file at ' . $fullPath . ' has no valid maincontentNode. Using entire body.', WATCHDOG_WARNING);
             $bodyNodes = $dom->getElementsByTagName('body');
             if ($bodyNodes->length == 0) {
                 $this->_log('The file at ' . $fullPath . ' has no valid body. Ignoring.', WATCHDOG_ERROR);
