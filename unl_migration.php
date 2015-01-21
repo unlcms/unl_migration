@@ -1538,7 +1538,7 @@ class Unl_Migration_Tool
     $html = $this->_tidy_html_fragment($html);
 
     $dom = new DOMDocument();
-    if (!@$dom->loadHTML($html)) {
+    if (!@$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD)) {
       return false;
     }
 
@@ -1567,7 +1567,7 @@ class Unl_Migration_Tool
     $html = $this->_tidy_html_fragment($maincontent);
 
     $dom = new DOMDocument();
-    if (!@$dom->loadHTML($html)) {
+    if (!@$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD)) {
       return false;
     }
 
