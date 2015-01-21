@@ -930,10 +930,9 @@ class Unl_Migration_Tool
             $pageTitle = 'Untitled';
         }
 
-        if ($this->_useLiferayCode) {
-          $maincontentNode = $dom->getElementById('main-content');
-        } else {
-          $maincontentNode = $dom->getElementById('maincontent');
+        $maincontentNode = $dom->getElementById('maincontent');
+        if ($maincontentNode === null || $this->_useLiferayCode) {
+            $maincontentNode = $dom->getElementById('main-content');
         }
       
         if (!$maincontentNode) {
