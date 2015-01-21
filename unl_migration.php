@@ -1538,6 +1538,7 @@ class Unl_Migration_Tool
 
     $dom = new DOMDocument();
     if (!@$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD)) {
+      $this->_log('Unable to load HTML for liferay content area parsing.', WATCHDOG_ERROR);
       return false;
     }
 
