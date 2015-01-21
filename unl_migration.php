@@ -931,7 +931,7 @@ class Unl_Migration_Tool
         }
 
         $maincontentNode = $dom->getElementById('maincontent');
-        if ($maincontentNode === null || $this->_useLiferayCode) {
+        if ($maincontentNode === null && $this->_useLiferayCode) {
             $maincontentNode = $dom->getElementById('main-content');
         }
       
