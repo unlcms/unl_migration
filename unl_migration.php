@@ -1537,8 +1537,7 @@ class Unl_Migration_Tool
     $html = $this->_tidy_html_fragment($html);
 
     $dom = new DOMDocument();
-    if (!@$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD)) {
-      $this->_log('Unable to load HTML for liferay content area parsing.', WATCHDOG_ERROR);
+    if (!@$dom->loadHTML($html)) {
       return false;
     }
 
@@ -1567,10 +1566,10 @@ class Unl_Migration_Tool
     $html = $this->_tidy_html_fragment($maincontent);
 
     $dom = new DOMDocument();
-    if (!@$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD)) {
+    if (!@$dom->loadHTML($html)) {
       return false;
     }
-
+    
     $xpath = new DOMXpath($dom);
 
     //Y.all("#main-content").addClass('wdn-main');
@@ -1640,7 +1639,10 @@ class Unl_Migration_Tool
 
     $nodes = $xpath->query("//div[@id='main-content']");
 
-    return $dom->saveHTML($nodes->item(0));
+    $new_html = $dom->saveHTML($nodes->item(0));
+    
+    //Return the tidy'd fragment, which will remove the html and body wrapper if it was applied by $dom->saveHTML()
+    return $this->_tidy_html_fragment($new_html);
   }
 
   private function _get_text_between_tokens($text, $start_token, $end_token, $tidy_output = TRUE) {
