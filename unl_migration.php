@@ -116,7 +116,7 @@ function unl_migration_step($migration, &$context)
   $context['finished'] = $migration->getFinished();
   $context['message'] = $migration->getMessage();
   $context['sandbox']['file'] = Unl_Migration_Tool::save_to_disk($migration);
-  $context['sandbox']['duration'] = min(300, ceil($context['sandbox']['duration'] * 1.5));
+  $context['sandbox']['duration'] = min(60, ceil($context['sandbox']['duration'] * 1.5));
 }
 
 
