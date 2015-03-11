@@ -1654,7 +1654,9 @@ class Unl_Migration_Tool
       'portlet-boundary_56_',
       'portlet-body',
       'portlet-borderless-container',
-      'portlet-layout'
+      'portlet-layout',
+      'columns-3',
+      'wdn-main'
     );
     
     foreach ($clases_to_remove as $class_to_remove) {
@@ -1668,17 +1670,86 @@ class Unl_Migration_Tool
           unset($classes[array_search($class_to_remove, $classes)]);
         }
         
-        $node->setAttribute('class', implode(' ', $classes));
+        if (count($classes)) {
+          $node->setAttribute('class', implode(' ', array_unique($classes)));
+        } else {
+          $node->removeAttribute('class');
+        }
+        
       }
     }
     
+    do {
+      //Remove duplicate divs IE: a wrapper div with the same classes
+      $nodes = $xpath->query("//div");
 
+      $no_more_duplicates = true;
+
+      foreach ($nodes as $node) {
+        if (!$node->parentNode) {
+          continue;
+        }
+        
+        //Only work on nodes that have the same tag
+        if ($node->nodeName != $node->parentNode->nodeName) {
+          continue;
+        }
+
+        if ($node->parentNode->getAttribute('class') != $node->getAttribute('class')) {
+          continue;
+        }
+
+        if ($node->parentNode->getAttribute('id') != $node->getAttribute('id')) {
+          continue;
+        }
+
+        $direct_children = 0;
+        //Only work on nodes that have 1 direct child
+        foreach ($node->parentNode->childNodes as $child_node) {
+          if ($child_node->nodeType == XML_TEXT_NODE && preg_match('/^\s+$/', $child_node->textContent)) {
+            //Text node was found, lets make sure that it is just whitespace.  If it is, we can skip it.
+            continue;
+          }
+          $direct_children++;
+        }
+        
+        if ($direct_children != 1) {
+          continue;
+        }
+
+        $no_more_duplicates = false;
+
+        $clone = $node->cloneNode(true);
+
+        $grandparent = $node->parentNode->parentNode;
+        
+        if (!$grandparent) {
+          continue;
+        }
+
+        //Remove the parent and replace it with the child
+        $grandparent->removeChild($node->parentNode);
+        $grandparent->appendChild($clone);
+      }
+      
+    } while (!$no_more_duplicates);
+    
+    //Find the root body node and export it
     $nodes = $xpath->query("//div[@id='main-content']");
-
-    $new_html = $dom->saveHTML($nodes->item(0));
+    if ($nodes->length == 0) {
+      $nodes = $xpath->query("body");
+    }
+    
+    $root = $nodes->item(0);
+    
+    //We don't want to include the root node in the HTML
+    $new_html = '';
+    foreach ($root->childNodes as $child_node) {
+      $new_html .= $dom->saveHTML($child_node);
+    }
     
     //Return the tidy'd fragment, which will remove the html and body wrapper if it was applied by $dom->saveHTML()
-    return $this->_tidy_html_fragment($new_html);
+    return $this->_tidy_html_fragment($new_html, array('drop-empty-paras'=>true));
   }
 
   private function _get_text_between_tokens($text, $start_token, $end_token, $tidy_output = TRUE) {
@@ -1699,7 +1770,7 @@ class Unl_Migration_Tool
     return FALSE;
   }
 
-  private function _tidy_html_fragment($html) {
+  private function _tidy_html_fragment($html, $custom_config = array()) {
     $config = array(
       'doctype' => 'transitional',
       'indent' => TRUE,
@@ -1709,6 +1780,9 @@ class Unl_Migration_Tool
       'new-blocklevel-tags' => 'article,header,footer,section,nav,main,aside,figure,figcaption',
       'new-inline-tags'     => 'video,audio,canvas,ruby,rt,rp,track,mark,meter,time',
     );
+
+    $config = $config + $custom_config;
+    
     $tidy = new Tidy();
     $tidy->parseString($html, $config, 'utf8');
     $tidy->cleanRepair();
