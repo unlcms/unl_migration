@@ -1558,7 +1558,7 @@ class Unl_Migration_Tool
     return "contains(concat(' ', normalize-space(@class), ' '), ' " . $class . " ')";
   }
 
-  private function _perform_liferay_maincontent_replacements($maincontent) {
+  public function _perform_liferay_maincontent_replacements($maincontent) {
     if (!$this->_useLiferayCode) {
       return FALSE;
     }
@@ -1636,6 +1636,42 @@ class Unl_Migration_Tool
     foreach ($result as $node) {
       $node->setAttribute('class', $node->getAttribute('class') . ' bp1-wdn-col-two-thirds');
     }
+    
+    //Remove classes
+    $clases_to_remove = array(
+      'portlet-column',
+      'aui-w33',
+      'portlet-column-first',
+      'portlet-dropzone',
+      'portlet-column-content',
+      'portlet-column-content-first',
+      'portlet-boundary',
+      'portlet-static',
+      'portlet-static-end',
+      'portlet-borderless',
+      'portlet-journal-content',
+      'portlet-boundary',
+      'portlet-boundary_56_',
+      'portlet-body',
+      'portlet-borderless-container',
+      'portlet-layout'
+    );
+    
+    foreach ($clases_to_remove as $class_to_remove) {
+      $result = $xpath->query("//*[" . $this->xpath_get_has_class($class_to_remove) . "]");
+
+      foreach ($result as $node) {
+        
+        $classes = explode(' ', $node->getAttribute('class'));
+        
+        while (in_array($class_to_remove, $classes)) {
+          unset($classes[array_search($class_to_remove, $classes)]);
+        }
+        
+        $node->setAttribute('class', implode(' ', $classes));
+      }
+    }
+    
 
     $nodes = $xpath->query("//div[@id='main-content']");
 
