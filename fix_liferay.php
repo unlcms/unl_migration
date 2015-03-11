@@ -17,15 +17,15 @@ $migration_tool = new UNL_Migration_Tool($baseUrl, $frontierPath, $frontierUser,
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Liferay main content fixer</title>
+  <title>Liferay body fixer</title>
   <link rel="stylesheet" href="style.css">
   <script src="script.js"></script>
 </head>
 <body>
-  <h1>Fix Liferay main content</h1>
+  <h1>Fix Liferay Body HTML</h1>
   <p>This will strip out/replace old lefray DIVs and Content</p>
   <form action="fix_liferay.php" method="post">
-    <label for="content_to_fix">The HTML content to fix</label>
+    <label for="content_to_fix">The HTML body to fix</label>
     <br />
     <textarea id="content_to_fix" name="content" cols="100" rows="15"></textarea>
     <br />
