@@ -34,12 +34,18 @@ $migration_tool = new UNL_Migration_Tool($baseUrl, $frontierPath, $frontierUser,
   
   <?php 
   if (isset($_POST['content'])):
-    $fixed_content = $migration_tool->_perform_liferay_maincontent_replacements($_POST['content']);
+    $string = $_POST['content'];
+    
+    //Replace en dashes because of a bug in an older version of PHP
+    $string = str_replace('–', '&ndash;', $string);
+
+    $fixed_content = $migration_tool->_perform_liferay_maincontent_replacements($string);
     ?>
     <br />
     <label for="fixed_html">Fixed HTML</label>
     <br />
-    <textarea id="fixed_html" name="fixed_html" cols="100" rows="15" readonly="readonly"><?php echo htmlentities($fixed_content) ?></textarea>
+    <textarea id="fixed_html" name="fixed_html" cols="100" rows="15" readonly="readonly"><?php echo htmlentities($fixed_content, null, 'UTF-8', false) ?></textarea>
+    <textarea id="fixed_html" name="fixed_html" cols="100" rows="15" readonly="readonly"><?php echo $fixed_content ?></textarea>
   <?php endif; ?>
 <!-- page content -->
 </body>
