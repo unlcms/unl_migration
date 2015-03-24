@@ -44,8 +44,12 @@ $migration_tool = new UNL_Migration_Tool($baseUrl, $frontierPath, $frontierUser,
     <br />
     <label for="fixed_html">Fixed HTML</label>
     <br />
-    <textarea id="fixed_html" name="fixed_html" cols="100" rows="15" readonly="readonly"><?php echo htmlentities($fixed_content, null, 'UTF-8', false) ?></textarea>
-    <textarea id="fixed_html" name="fixed_html" cols="100" rows="15" readonly="readonly"><?php echo $fixed_content ?></textarea>
+    <textarea id="fixed_html" name="fixed_html" cols="100" rows="15" readonly="readonly"><?php echo htmlentities($fixed_content, null, 'UTF-8') ?></textarea>
+    <br />
+    <br />
+    <pre>
+<?php echo htmlentities($fixed_content, null, 'UTF-8') ?>
+    </pre>
   <?php endif; ?>
 <!-- page content -->
 </body>

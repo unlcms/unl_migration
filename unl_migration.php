@@ -1777,7 +1777,6 @@ class Unl_Migration_Tool
       'output-xhtml' => TRUE,
       'show-body-only' => TRUE,
       'wrap' => 0,
-      'numeric-entities' => true,
       'new-blocklevel-tags' => 'article,header,footer,section,nav,main,aside,figure,figcaption',
       'new-inline-tags'     => 'video,audio,canvas,ruby,rt,rp,track,mark,meter,time',
     );
