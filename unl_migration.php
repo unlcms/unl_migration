@@ -337,14 +337,14 @@ class Unl_Migration_Tool
       }
       return TRUE;
     }
-    
+
     private function _addSitePath($path, $allowTralingSlash = FALSE, $caseSensitive = FALSE)
     {
       // Blacklist any liferay calendars to avoid crawling an infinite number of pages
       if ($this->_useLiferayCode && strpos($path, 'struts_action=%2Fcalendar%2Fview') !== FALSE) {
         return;
       }
-      
+
       if (($fragmentStart = strrpos($path, '#')) !== FALSE) {
           $path = substr($path, 0, $fragmentStart);
       }
@@ -696,27 +696,27 @@ class Unl_Migration_Tool
       if (!$this->_useLiferayCode) {
         return;
       }
-      
+
       $urls = array();
       $urls[] = $this->_baseUrl . '?p_p_id=EXT_SITEMAP&p_p_state=exclusive&p_p_mode=view';
-      
+
       $host = parse_url($this->_baseUrl, PHP_URL_HOST);
       if (array_key_exists($host, $this->_liferaySubsites)) {
         foreach ($this->_liferaySubsites[$host] as $subSite) {
           $urls[] = $this->_baseUrl . 'web/' . $subSite . '/?p_p_id=EXT_SITEMAP&p_p_state=exclusive&p_p_mode=view';
         }
       }
-      
+
       foreach ($urls as $url) {
         $data = $this->_getUrl($url);
-        
+
         if (strpos($data['contentType'], 'html') === FALSE) {
           return;
         }
-  
+
         $dom = new DOMDocument();
         @$dom->loadHTML($data['content']);
-        
+
         $linkNodes = $dom->getElementsByTagName('a');
         foreach ($linkNodes as $linkNode) {
           $path = $this->_processLinks($linkNode->getAttribute('href'), '');
@@ -731,7 +731,7 @@ class Unl_Migration_Tool
     {
         $this->_addProcessedPage($path);
         $fullPath = $this->_baseUrl . $path;
-        
+
         $this->_log('Processing page: ' . $path, WATCHDOG_DEBUG);
 
         $url = $this->_baseUrl . $path;
@@ -760,41 +760,38 @@ class Unl_Migration_Tool
 
         $cleanPath = $path;
         $pathParts = parse_url($path);
-        // If the path contains a query, we'll have to change it.
-        if (array_key_exists('query', $pathParts)) {
-          // If a Content-Disposition header exists with a filename, grab it.
-          $altFileName = '';
-          $matches = array();
-          if (array_key_exists('Content-Disposition', $data['headers']) &&
-              preg_match('/filename="(.*)"/', $data['headers']['Content-Disposition'], $matches)) {
-            $altFileName = $matches[1];
-          }
 
-          // Parse the query string
-          $query = array();
-          parse_str($pathParts['query'], $query);
-          
-          // If this is a liferay file, just save it as <uuid>.<ext> in the root files directory.
-          if ($pathParts['path'] == 'c/document_library/get_file' && $query['uuid']) {
-            if (strrpos($pathParts['query'], '.') > strrpos($pathParts['query'], '&') && strrpos($pathParts['query'], '.') !== FALSE) {
-              $cleanPath = $query['uuid'] . substr($pathParts['query'], strrpos($pathParts['query'], '.'));
-            }
-            else if ($altFileName && strpos($altFileName, '.') !== FALSE) {
-              $cleanPath = $query['uuid'] . substr($altFileName, strrpos($altFileName, '.'));
-            } else {
-              $cleanPath = $query['uuid'];
-            }
-          }
-          // Or, if it exists, save it as the content-disposition name.
-          else if ($altFileName) {
-            $cleanPath = $pathParts['path'] . '/' . $altFileName;
-          }
-          // Otherwise, just save it with a / instead of a ?.
-          else {
-            $cleanPath = $pathParts['path'] . '/' . $pathParts['query'];
-          }
-          $cleanPath = strtr($cleanPath, array('%2f' => '/', '%2F' => '/'));
+        // If a Content-Disposition header exists with a filename, grab it.
+        $altFileName = '';
+        $matches = array();
+        if (array_key_exists('Content-Disposition', $data['headers']) &&
+          preg_match('/filename="(.*)"/', $data['headers']['Content-Disposition'], $matches)) {
+          $altFileName = $matches[1];
         }
+
+        // Parse the query string
+        $query = array();
+        parse_str($pathParts['query'], $query);
+
+        // If it exists, save it as the content-disposition name.
+        if ($altFileName) {
+          $cleanPath = 'documents/' . $altFileName;
+        }
+        // Or if this is a liferay file, just save it as <uuid>.<ext> in the root files directory.
+        else if ($pathParts['path'] == 'c/document_library/get_file' && $query['uuid']) {
+          if (strrpos($pathParts['query'], '.') > strrpos($pathParts['query'], '&') && strrpos($pathParts['query'], '.') !== FALSE) {
+            $cleanPath = $query['uuid'] . substr($pathParts['query'], strrpos($pathParts['query'], '.'));
+          }
+          else {
+            $cleanPath = $query['uuid'];
+          }
+        }
+        // Otherwise, just save it with a / instead of a ?.
+        else {
+          $cleanPath = $pathParts['path'] . '/' . $pathParts['query'];
+        }
+        $cleanPath = strtr($cleanPath, array('%2f' => '/', '%2F' => '/'));
+        $cleanPath = trim($cleanPath, '/');
 
         if (strpos($data['contentType'], 'html') === FALSE) {
           if (!$data['contentType']) {
@@ -850,7 +847,7 @@ class Unl_Migration_Tool
             $this->_log('The file at ' . $fullPath . ' has no valid body. Ignoring.', WATCHDOG_ERROR);
             return;
         }
-      
+
         if ($this->_useLiferayCode) {
           $maincontentarea = $this->_perform_liferay_maincontent_replacements($maincontentarea);
         }
@@ -889,7 +886,7 @@ class Unl_Migration_Tool
             $pageTitle .= rtrim(' ' . basename($path));
           }
         }
-      
+
         //Try getting the pageTitle from the breadcrumbs
         if (!$pageTitle) {
           $pageTitle = $this->getPageTitleFromBreadcrumbs($html);
@@ -906,7 +903,7 @@ class Unl_Migration_Tool
           $titleParts = explode('|', $titleText);
           if (count($titleParts) > 2) {
             $pageTitle = trim(array_pop($titleParts));
-            
+
             if (strpos($pageTitle, 'University of Nebraska') === 0) {
               //This is the new format where the page title is the first part of the <title>
               $pageTitle = trim(array_shift($titleParts));
@@ -934,7 +931,7 @@ class Unl_Migration_Tool
         if ($maincontentNode === null && $this->_useLiferayCode) {
             $maincontentNode = $dom->getElementById('main-content');
         }
-      
+
         if (!$maincontentNode) {
             $this->_log('The file at ' . $fullPath . ' has no valid maincontentNode. Using entire body.', WATCHDOG_WARNING);
             $bodyNodes = $dom->getElementsByTagName('body');
@@ -985,21 +982,21 @@ class Unl_Migration_Tool
     private function getPageTitleFromBreadcrumbs($html)
     {
       $html = $this->_tidy_html_fragment($html);
-  
+
       $dom = new DOMDocument();
       if (!@$dom->loadHTML($html)) {
         return false;
       }
-  
+
       $xpath = new DOMXpath($dom);
-  
+
       $nodes = $xpath->query("(//nav[@id='breadcrumbs']/ul/li)[last()]");
-  
+
       if ($nodes->length == 0) {
         //No match was found.
         return false;
       }
-  
+
       return trim($nodes->item(0)->nodeValue);
     }
 
@@ -1226,7 +1223,7 @@ class Unl_Migration_Tool
         if (!in_array($body_format, $filter_format_keys)) {
             $body_format = array_shift($filter_format_keys);
         }
-        
+
         $node->body = array(
             'und' => array(
                 array(
@@ -1275,7 +1272,7 @@ class Unl_Migration_Tool
         curl_setopt($this->_curl, CURLOPT_URL, $url);
         curl_setopt($this->_curl, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($this->_curl, CURLOPT_HEADER, TRUE);
-        
+
         if ($this->_useLiferayCode == false) {
           //Liferay doesn't like useragents
           curl_setopt($this->_curl, CURLOPT_USERAGENT, 'UNL-CMS Migration Tool');
@@ -1285,7 +1282,7 @@ class Unl_Migration_Tool
 
         $data = curl_exec($this->_curl);
         $meta = curl_getinfo($this->_curl);
-      
+
         //Rate limiting
         sleep(1);
 
@@ -1316,7 +1313,7 @@ class Unl_Migration_Tool
               //Rate limiting
               sleep(1);
             }
-          
+
             $content = substr($data, $meta['header_size']);
         }
 
@@ -1476,7 +1473,7 @@ class Unl_Migration_Tool
         $logger = $this->_logger;
         return $logger($message, $severity);
       }
-      
+
       $this->_log[] = $message;
 
       if ($severity == WATCHDOG_INFO) {
@@ -1552,7 +1549,7 @@ class Unl_Migration_Tool
 
     return $dom->saveHTML($nodes->item(0));
   }
-  
+
   private function xpath_get_has_class($class)
   {
     return "contains(concat(' ', normalize-space(@class), ' '), ' " . $class . " ')";
@@ -1569,7 +1566,7 @@ class Unl_Migration_Tool
     if (!@$dom->loadHTML($html)) {
       return false;
     }
-    
+
     $xpath = new DOMXpath($dom);
 
     //Y.all("#main-content").addClass('wdn-main');
@@ -1636,7 +1633,7 @@ class Unl_Migration_Tool
     foreach ($result as $node) {
       $node->setAttribute('class', $node->getAttribute('class') . ' bp1-wdn-col-two-thirds');
     }
-    
+
     //Remove classes
     $clases_to_remove = array(
       'portlet-column',
@@ -1658,27 +1655,27 @@ class Unl_Migration_Tool
       'columns-3',
       'wdn-main'
     );
-    
+
     foreach ($clases_to_remove as $class_to_remove) {
       $result = $xpath->query("//*[" . $this->xpath_get_has_class($class_to_remove) . "]");
 
       foreach ($result as $node) {
-        
+
         $classes = explode(' ', $node->getAttribute('class'));
-        
+
         while (in_array($class_to_remove, $classes)) {
           unset($classes[array_search($class_to_remove, $classes)]);
         }
-        
+
         if (count($classes)) {
           $node->setAttribute('class', implode(' ', array_unique($classes)));
         } else {
           $node->removeAttribute('class');
         }
-        
+
       }
     }
-    
+
     do {
       //Remove duplicate divs IE: a wrapper div with the same classes
       $nodes = $xpath->query("//div");
@@ -1689,7 +1686,7 @@ class Unl_Migration_Tool
         if (!$node->parentNode) {
           continue;
         }
-        
+
         //Only work on nodes that have the same tag
         if ($node->nodeName != $node->parentNode->nodeName) {
           continue;
@@ -1712,7 +1709,7 @@ class Unl_Migration_Tool
           }
           $direct_children++;
         }
-        
+
         if ($direct_children != 1) {
           continue;
         }
@@ -1722,7 +1719,7 @@ class Unl_Migration_Tool
         $clone = $node->cloneNode(true);
 
         $grandparent = $node->parentNode->parentNode;
-        
+
         if (!$grandparent) {
           continue;
         }
@@ -1731,23 +1728,23 @@ class Unl_Migration_Tool
         $grandparent->removeChild($node->parentNode);
         $grandparent->appendChild($clone);
       }
-      
+
     } while (!$no_more_duplicates);
-    
+
     //Find the root body node and export it
     $nodes = $xpath->query("//div[@id='main-content']");
     if ($nodes->length == 0) {
       $nodes = $xpath->query("body");
     }
-    
+
     $root = $nodes->item(0);
-    
+
     //We don't want to include the root node in the HTML
     $new_html = '';
     foreach ($root->childNodes as $child_node) {
       $new_html .= $dom->saveHTML($child_node);
     }
-    
+
     //Return the tidy'd fragment, which will remove the html and body wrapper if it was applied by $dom->saveHTML()
     return $this->_tidy_html_fragment($new_html, array('drop-empty-paras'=>true));
   }
@@ -1782,7 +1779,7 @@ class Unl_Migration_Tool
     );
 
     $config = $config + $custom_config;
-    
+
     $tidy = new Tidy();
     $tidy->parseString($html, $config, 'utf8');
     $tidy->cleanRepair();
@@ -1797,7 +1794,7 @@ class Unl_Migration_Tool
   public function getFinished() {
     return min(0.99, count($this->_processedPages) / count($this->_siteMap));
   }
-  
+
   public function setLogger(callable $logger) {
     $this->_logger = $logger;
   }
